@@ -52,7 +52,7 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
        return ()=>{
          clearInterval(res)
        }
- },[])
+ },[count])
    
   
 
