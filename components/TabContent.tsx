@@ -11,6 +11,7 @@ import { addData } from '../Action/dataAction';
 const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents , 'Table'>) => {
 
    const dispatch = useDispatch()
+   const [data , setData] = useState([])
    const [count , setCount] = useState(0)
   
    const info = useSelector((state : any)=>{
@@ -22,28 +23,39 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
    const from = page * itemsPerPage;
    const to = Math.min((page + 1) * itemsPerPage)
 
+
+   const getData=()=>{
+      axios.get(`https://hn.algolia.com/api/v1/search_by_date?tags=story&page=${count}`)
+      .then((res : any)=>{
+           const result : any = res.data
+               
+              dispatch(addData(result.hits))
+            
+       })
+      .catch((err : any)=>alert(err.message))
+   }
+
+   const loaderRender=()=>{
+      console.log('load data')
+      setCount(count + 1)
+  }
+
+  useEffect(()=>{
+     getData()
+  },[count])
+
    useEffect(()=>{
       let res = setInterval(()=>{
             setCount(count + 1)
-            axios.get(`https://hn.algolia.com/api/v1/search_by_date?tags=story&page=${count}`)
-             .then((res : any)=>{
-                  const result : any = res.data
-                      
-                     dispatch(addData([...info ,...result.hits]))
-                   
-              })
-             .catch((err : any)=>alert(err.message))
-      }, 10000)
+              getData()
+      },10000)
        return ()=>{
          clearInterval(res)
        }
- },[count])
+ },[])
    
   
- const loadMoreItem=()=>{
-    
-       setPage(count + 1)
-   }
+
 
 
    
@@ -62,7 +74,7 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
   //  ]
 
    const handlePress=(index : number)=>{
-     alert(`you have selected-${index}`)
+     //alert(`you have selected-${index}`)
      navigation.navigate('Json' , {
        value : info[index]
      })
@@ -107,7 +119,7 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
 
            <FlatList  data={info} 
            onEndReachedThreshold={0.5}
-           onEndReached={loadMoreItem}
+           onEndReached={loaderRender}
             keyExtractor={(x, i: any)=> i} 
             renderItem={({item , index})=>(
                 <View>
