@@ -1,6 +1,6 @@
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View , FlatList} from 'react-native'
 import React ,{useState , useEffect} from 'react';
-import { DataTable } from 'react-native-paper'
+import { ActivityIndicator, DataTable } from 'react-native-paper'
 // import {Table  , Row , Rows} from "react-native-table-component"
 import axios from 'axios';
 import {useDispatch , useSelector} from 'react-redux'
@@ -12,31 +12,42 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
 
    const dispatch = useDispatch()
    const [count , setCount] = useState(0)
-  //  const [headers  , setHeaders] = useState([['Url', 'Title' , 'Created--At' , 'Author']])
-    const [data , setData] = useState(null)
- 
-    const info = useSelector((state : any)=>{
-       return state.data
-    })
-   
-   
+  
+   const info = useSelector((state : any)=>{
+      return state.data
+   })
+
+   const itemsPerPage : number = 20
+   const [page , setPage] = useState(0)
+   const from = page * itemsPerPage;
+   const to = Math.min((page + 1) * itemsPerPage)
+
    useEffect(()=>{
-        let res = setInterval(()=>{
-              setCount(count + 1)
-              axios.get(`https://hn.algolia.com/api/v1/search_by_date?tags=story&page=${count}`)
-               .then((res : any)=>{
-                    const result : any = res.data
-                       dispatch(addData(result))
-                     
-                })
-               .catch((err : any)=>alert(err.message))
-        }, 300000)
-         return ()=>{
-           clearInterval(res)
-         }
-     
-         
-   },[count])
+      let res = setInterval(()=>{
+            setCount(count + 1)
+            axios.get(`https://hn.algolia.com/api/v1/search_by_date?tags=story&page=${count}`)
+             .then((res : any)=>{
+                  const result : any = res.data
+                      
+                     dispatch(addData([...info ,...result.hits]))
+                   
+              })
+             .catch((err : any)=>alert(err.message))
+      }, 10000)
+       return ()=>{
+         clearInterval(res)
+       }
+ },[count])
+   
+  
+ const loadMoreItem=()=>{
+    
+       setPage(count + 1)
+   }
+
+
+   
+   
       
   //  console.log('data' , data)
      
@@ -51,13 +62,16 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
   //  ]
 
    const handlePress=(index : number)=>{
-     //alert(`you have selected-${index}`)
+     alert(`you have selected-${index}`)
      navigation.navigate('Json' , {
-       value : info.hits[index]
+       value : info[index]
      })
 
    }
  
+   
+
+    
   
 
   return (
@@ -77,9 +91,11 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
        </Table>
         
     </View> */}
-     { info ? (
+     { info.length > 1 ? (
         <View style={{marginTop : 20}}>
             <DataTable >
+    
+        
         <DataTable.Header style={{borderBottomWidth : 1}} >
           <DataTable.Title textStyle={{fontSize : 16}}>Url</DataTable.Title>
           <DataTable.Title textStyle={{fontSize : 16}}>Title</DataTable.Title>
@@ -87,8 +103,46 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
           <DataTable.Title textStyle={{fontSize : 16}}>Author</DataTable.Title>
         </DataTable.Header>
 
-        <ScrollView>
-           { info.hits.map((ele: any, index : any)=> {
+        
+
+           <FlatList  data={info} 
+           onEndReachedThreshold={0.5}
+           onEndReached={loadMoreItem}
+            keyExtractor={(x, i: any)=> i} 
+            renderItem={({item , index})=>(
+                <View>
+                           <TouchableOpacity onPress={()=>handlePress(index)}>
+                  <View style={{flexDirection : 'row' , borderBottomColor : 'black' ,borderBottomWidth : 2, width : '90%' , marginLeft : 10}}  >
+                    
+                    <View  style={{width : '25%'}} >
+                    <Text  >{item.url}</Text>
+                     
+                    </View> 
+                     
+                     <View style={{width : '25%'}}>
+                        <Text>{item.title}</Text>
+                     </View>
+              
+              
+                    <View style={{width : '25%'}}>
+                       <Text>{item.created_at}</Text>
+                    </View>
+              
+                    
+                    <View style={{width : '25%' }}>
+                       <Text style={{textAlign : 'center'}}>{item.author}</Text>
+                    </View>
+             
+               </View>
+                  </TouchableOpacity>
+             
+             </View>
+             
+                
+            )}
+          />
+        {/* 
+           { info.map((ele: any, index : any)=> {
              return (
                 <View  key={index} >
              
@@ -97,39 +151,43 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
                     
                     <View  style={{width : '25%'}} >
                     <Text  >{ele.url}</Text>
-                     {/* <DataTable.Cell  textStyle={{fontSize : 14  }}><Text style={{width : '25%'}}  >{ele.url}</Text></DataTable.Cell> */}
+                     
                     </View> 
                      
                      <View style={{width : '25%'}}>
                         <Text>{ele.title}</Text>
                      </View>
               
-               {/* <DataTable.Cell  textStyle={{fontSize : 14 }}><Text>{ele.title}</Text></DataTable.Cell> */}
+              
                     <View style={{width : '25%'}}>
                        <Text>{ele.created_at}</Text>
                     </View>
-               {/* <DataTable.Cell  textStyle={{fontSize : 14 }}>{ele.created_at}</DataTable.Cell> */}
+              
                     
                     <View style={{width : '25%' }}>
                        <Text style={{textAlign : 'center'}}>{ele.author}</Text>
                     </View>
-               {/* <DataTable.Cell  textStyle={{fontSize : 14 }}>{ele.author}</DataTable.Cell> */}
-               
+             
                </DataTable.Row>
                   </TouchableOpacity>
              
              </View>
             
              )
-           }) }
-         
-         </ScrollView>
+           }) } */}
+             
+
+              <DataTable.Pagination page={page}
+            numberOfPages={Math.floor(info.length / itemsPerPage)}
+            onPageChange={page => setPage(page)}
+            label={`${from + 1}-${to} of ${info.length}`} 
+          />
         
       </DataTable>  
         </View>
      ) : (
         <View>
-            <Text>Loading...</Text>
+            <Text style={{textAlign : 'center'}}>Loading...</Text>
         </View>
      )}
      

@@ -1,9 +1,9 @@
-const initialData :any = null
+const initialData :any = []
 
 const dataReducers =(state = initialData , action: any)=>{
     switch(action.type){
         case 'ADD-DATA' : {
-            return {...state , ...action.payload}
+            return  [...state , ...action.payload]
         }
         default : {
              return state
