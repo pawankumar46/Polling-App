@@ -11,80 +11,65 @@ import { addData } from '../Action/dataAction';
 const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents , 'Table'>) => {
 
    const dispatch = useDispatch()
-   const [data , setData] = useState([])
-   const [count , setCount] = useState(0)
-  
-   const info = useSelector((state : any)=>{
-      return state.data
-   })
-
-   const itemsPerPage : number = 20
+   const [data , setData] = useState<any>([])
    const [page , setPage] = useState(0)
-   const from = page * itemsPerPage;
-   const to = Math.min((page + 1) * itemsPerPage)
+    const [isLoading , setIsLoading] = useState(true)
+  
+  //  const info = useSelector((state : any)=>{
+  //     return state.data
+  //  })
 
-
-   const getData=()=>{
-      axios.get(`https://hn.algolia.com/api/v1/search_by_date?tags=story&page=${count}`)
-      .then((res : any)=>{
-           const result : any = res.data
-               
-              dispatch(addData(result.hits))
-            
-       })
-      .catch((err : any)=>alert(err.message))
-   }
-
-   const loaderRender=()=>{
-      console.log('load data')
-      setCount(count + 1)
-  }
-
-  useEffect(()=>{
-     getData()
-  },[count])
-
-   useEffect(()=>{
-      let res = setInterval(()=>{
-            setCount(count + 1)
-              getData()
-      },10000)
-       return ()=>{
-         clearInterval(res)
-       }
- },[count])
+  //  const itemsPerPage : number = 20
    
+  //  const from = page * itemsPerPage;
+  //  const to = Math.min((page + 1) * itemsPerPage)
+
+
+   useEffect(() => {
+   
+      const timer = setInterval(() => {
+        
+       getData();
+       setPage(page + 1)
+        
+      }, 20000)
+      return () => clearInterval(timer);
+   
+  }, [data])
   
 
+ const getData=()=>{
+   console.log('api')
+   axios.get(`https://hn.algolia.com/api/v1/search_by_date?tags=story&page=${page}`)
+   .then((res : any)=>{
+        const result : any = res.data.hits
+         setData([...data,...result])
+         setIsLoading(false)
+    })
+   .catch((err : any)=>alert(err.message))
+}
 
-
-   
-   
-      
-  //  console.log('data' , data)
-     
-  //   let url : any = data.hits.map((ele : any)=> ele.url)
-
-
-  
-
-  //  const tableData : any =  [
-  //    [ url.map((ele : any)=> ele[0]) , 'hgfytdktdytdkytd','gg', 'a'  ],
-    
-  //  ]
-
-   const handlePress=(index : number)=>{
-     //alert(`you have selected-${index}`)
+ 
+    const handlePress=(index : number)=>{
+     alert(`you have selected-${index}`)
      navigation.navigate('Json' , {
-       value : info[index]
+       value : data[index]
      })
 
    }
  
    
 
-    
+    const renderFooter=()=>{
+        return (
+          isLoading ? 
+         <View style={styles.loader}>
+             <ActivityIndicator  size='large'/>
+         </View>  : null
+        )
+    }
   
+    console.log('total',data)
 
   return (
     
@@ -92,18 +77,8 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
     
     
     
-    {/* <View style={{paddingTop : 20 , width : '95%' , marginLeft : 10 }}>
-       <Table borderStyle={{borderWidth : 1 , margin : 2}}>
-          <Row data={headers.flat()} style={styles.head}  textStyle={styles.head}/>
-          
-          
-           <Rows  onPress={handlePress} style={styles.text}  data={tableData} textStyle={styles.text}/>
-           
-          
-       </Table>
-        
-    </View> */}
-     { info.length > 1 ? (
+    
+     { data.length > 1 ? (
         <View style={{marginTop : 20}}>
             <DataTable >
     
@@ -117,9 +92,7 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
 
         
 
-           <FlatList  data={info} 
-           onEndReachedThreshold={0.5}
-           onEndReached={loaderRender}
+           <FlatList  data={data} 
             keyExtractor={(x, i: any)=> i} 
             renderItem={({item , index})=>(
                 <View>
@@ -152,48 +125,18 @@ const TabContent = ({route , navigation }: NativeStackScreenProps<RootComponents
              
                 
             )}
+            onEndReachedThreshold={0}
+            onEndReached={() => { console.log('load More') , setPage(prevPage => prevPage + 1) , getData()}}
+            ListFooterComponent={renderFooter}
           />
-        {/* 
-           { info.map((ele: any, index : any)=> {
-             return (
-                <View  key={index} >
+        
              
-                  <TouchableOpacity onPress={()=>handlePress(index)}>
-                  <DataTable.Row  style={{flexDirection : 'row' , borderBottomColor : 'black' ,borderBottomWidth : 2, width : '90%' , marginLeft : 10}}  >
-                    
-                    <View  style={{width : '25%'}} >
-                    <Text  >{ele.url}</Text>
-                     
-                    </View> 
-                     
-                     <View style={{width : '25%'}}>
-                        <Text>{ele.title}</Text>
-                     </View>
-              
-              
-                    <View style={{width : '25%'}}>
-                       <Text>{ele.created_at}</Text>
-                    </View>
-              
-                    
-                    <View style={{width : '25%' }}>
-                       <Text style={{textAlign : 'center'}}>{ele.author}</Text>
-                    </View>
-             
-               </DataTable.Row>
-                  </TouchableOpacity>
-             
-             </View>
-            
-             )
-           }) } */}
-             
-
+{/* 
               <DataTable.Pagination page={page}
             numberOfPages={Math.floor(info.length / itemsPerPage)}
             onPageChange={page => setPage(page)}
             label={`${from + 1}-${to} of ${info.length}`} 
-          />
+          /> */}
         
       </DataTable>  
         </View>
@@ -221,11 +164,14 @@ const styles = StyleSheet.create({
     fontSize : 20
   },
   head: {
-     
      fontSize : 20,
      textAlign : 'center',
      fontWeight : 'bold' 
      },
+   loader : {
+       marginTop : 30,
+       alignItems : 'center'
+     }
 })
 
 

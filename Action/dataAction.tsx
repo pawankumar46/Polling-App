@@ -5,3 +5,4 @@ export const addData=(data : any)=>{
         payload : data
     }
 }
+

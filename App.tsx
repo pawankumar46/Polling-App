@@ -7,11 +7,11 @@ import { Provider } from 'react-redux';
 
 import { NavigationContainer } from '@react-navigation/native'
  const store = ConfigureStore()
- console.log('store' ,  store.getState())
+//  console.log('store' ,  store.getState())
 
-  store.subscribe(()=>{
-     console.log('updated' , store.getState())
-  })
+  // store.subscribe(()=>{
+  //    console.log('updated' , store.getState())
+  // })
 export default function App() {
   return (
     <Provider store={store}>
